@@ -16,6 +16,7 @@ numTemp db 0
 msgFx db 0ah,0dh,'f(x) = ','$'
 msgFderx db 0ah,0dh,'f',27h,'(x) = ','$'
 msgFintx db 0ah,0dh,'F(x) = ','$'
+val5 db '*x5','$'
 val4 db '*x4','$'
 val3 db '*x3','$'
 val2 db '*x2','$'
@@ -110,6 +111,8 @@ dec cx
 cmp cx,0
 jne bucle_ingresarFunc
 
+call derivarFuncion
+
 popear
 jmp menuPrincipal
 
@@ -124,6 +127,7 @@ jmp menuPrincipal
 ;=========================MOSTRAR DERIVADA===========================
 ;====================================================================
 mostrarDerivada:
+call mostrar_funcionDerivada
 jmp menuPrincipal
 
 ;====================================================================
@@ -213,6 +217,74 @@ fin_proceso:
 popear
 ret
 mostrar_funcionEnMemoria endp
+
+;====================================================================
+;=========================DERIVAR FUNCION============================
+;====================================================================
+derivarFuncion proc near
+pushear
+
+push ax
+multiplicar fun[4],4
+mov fun_der[3],al
+
+multiplicar fun[3],3
+mov fun_der[2],al
+
+multiplicar fun[2],2
+mov fun_der[1],al
+
+multiplicar fun[1],1
+mov fun_der[0],al
+pop ax
+
+popear
+ret
+derivarFuncion endp
+
+;====================================================================
+;=========================MOSTRAR DERIVADA============================
+;====================================================================
+mostrar_funcionDerivada proc near
+pushear
+
+print msgFderx
+
+v3:
+mov ah,fun_der[3]
+cmp ah,0
+je v2
+mov numero_a_imprimir,ah
+call printNum
+print val3
+
+v2:
+mov ah,fun_der[2]
+cmp ah,0
+je v1
+mov numero_a_imprimir,ah
+call printNum
+print val2
+
+v1:
+mov ah,fun_der[1]
+cmp ah,0
+je v0
+mov numero_a_imprimir,ah
+call printNum
+print val1
+
+v0:
+mov ah,fun_der[0]
+cmp ah,0
+je fin_proceso
+mov numero_a_imprimir,ah
+call printNum
+
+fin_proceso:
+popear
+ret
+mostrar_funcionDerivada endp
 
 printNum proc near
 pushear
