@@ -15,6 +15,13 @@ mov bl,p2
 imul bl
 endm
 
+dividir macro p1,p2
+xor ax,ax
+mov al,p1
+mov bl,p2
+idiv bl
+endm
+
 pushear macro
   push ax
   push bx

@@ -21,6 +21,12 @@ val4 db '*x4','$'
 val3 db '*x3','$'
 val2 db '*x2','$'
 val1 db '*x','$'
+signoDiv db '/','$'
+masC db ' + c','$'
+cinco db '5','$'
+cuatro db '4','$'
+tres db '3','$'
+dos db '2','$'
 numero_a_imprimir db 0
 ;=============ARREGLOS============
 ;Funcion normal
@@ -112,6 +118,7 @@ cmp cx,0
 jne bucle_ingresarFunc
 
 call derivarFuncion
+call integrarFuncion
 
 popear
 jmp menuPrincipal
@@ -134,6 +141,7 @@ jmp menuPrincipal
 ;=========================MOSTRAR INTEGRAL===========================
 ;====================================================================
 mostrarIntegral:
+call mostrar_funcionIntegrada
 jmp menuPrincipal
 
 ;====================================================================
@@ -243,6 +251,33 @@ ret
 derivarFuncion endp
 
 ;====================================================================
+;=========================INTEGRAR FUNCION===========================
+;====================================================================
+integrarFuncion proc near
+pushear
+
+push ax
+dividir fun[4],4
+mov fun_int[4],al
+
+dividir fun[3],3
+mov fun_int[3],al
+
+dividir fun[2],2
+mov fun_int[2],al
+
+dividir fun[1],1
+mov fun_int[1],al
+
+mov al,fun[0]
+mov fun_int[0],al
+pop ax
+
+popear
+ret
+integrarFuncion endp
+
+;====================================================================
 ;=========================MOSTRAR DERIVADA============================
 ;====================================================================
 mostrar_funcionDerivada proc near
@@ -285,6 +320,67 @@ fin_proceso:
 popear
 ret
 mostrar_funcionDerivada endp
+
+;====================================================================
+;=========================MOSTRAR INTEGRAL===========================
+;====================================================================
+mostrar_funcionIntegrada proc near
+pushear
+
+print msgFintx
+
+mov ah,fun[4]
+cmp ah,0
+je v3
+mov numero_a_imprimir,ah
+call printNum
+print signoDiv
+print cinco
+print val5
+
+v3:
+mov ah,fun[3]
+cmp ah,0
+je v2
+mov numero_a_imprimir,ah
+call printNum
+print signoDiv
+print cuatro
+print val4
+
+v2:
+mov ah,fun[2]
+cmp ah,0
+je v1
+mov numero_a_imprimir,ah
+call printNum
+print signoDiv
+print tres
+print val3
+
+v1:
+mov ah,fun[1]
+cmp ah,0
+je v0
+mov numero_a_imprimir,ah
+call printNum
+print signoDiv
+print dos
+print val2
+
+v0:
+mov ah,fun[0]
+cmp ah,0
+je fin_proceso
+mov numero_a_imprimir,ah
+call printNum
+print val1
+
+fin_proceso:
+print masC
+popear
+ret
+mostrar_funcionIntegrada endp
 
 printNum proc near
 pushear
