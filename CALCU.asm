@@ -163,6 +163,9 @@ int 21h
 ret
 getchar endp
 
+;====================================================================
+;=========================MOSTRAR FUNCION============================
+;====================================================================
 mostrar_funcionEnMemoria proc near
 pushear
 
@@ -223,6 +226,7 @@ mov al,numero_a_imprimir
 mov bl,-1
 cmp al,1
 jg _imprimir_pos;=====Si es positiva no hacemos ningun cambio========
+je _imprimir_pos
 imul bl;=Si es negativa convertimos a positiva e imprimimos signo======
 print minus
 jmp _imprimir_num
