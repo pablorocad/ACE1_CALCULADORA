@@ -28,6 +28,17 @@ cuatro db '4','$'
 tres db '3','$'
 dos db '2','$'
 numero_a_imprimir db 0
+;=============GRAFICAR============
+menuGraficar db 0ah,0dh,'1) Graficar original f(x)',0ah,0dh,'2) Graficar derivada f',27h,'(x)',0ah,0dh,'3) Graficar integral F(x)',0ah,0dh,'4) Regresar',0ah,0dh,'opcion: ', '$'
+valorFx dw 0
+valorX dw 0
+_minimo dw -4
+_maximo dw 4
+_pot dw 1
+base dw 0
+exp db 0
+valorAnteriorFx dw 0
+FxActual dw 0
 ;=============ARREGLOS============
 ;Funcion normal
 fun db 0,0,0,0,0
@@ -41,6 +52,8 @@ fun_int db 0,0,0,0,0
 ;=================================INICIO=============================
 ;====================================================================
 main  proc
+mov ax,@data
+mov ds, ax;LIMPIAMOS
 print inicio
 
 menuPrincipal:
@@ -63,6 +76,8 @@ cmp al,37h
   je modoCalculadora
 cmp al,38h
   je salir
+
+jmp menuPrincipal
 
   ;====================================================================
   ;=========================INGRESAR FUNCION===========================
@@ -148,18 +163,102 @@ jmp menuPrincipal
 ;============================GRAFICAR================================
 ;====================================================================
 graficar:
+print menuGraficar
+call getchar
+
+cmp al,31h
+  je graficarFuncionNormal
+cmp al,32h
+  je graficarFuncionDerivada
+cmp al,33h
+  je graficarFuncionIntegrada
+cmp al,34h
+  je menuPrincipal
+
+jmp graficar
+;====================================================================
+;======================GRAFICA NORMAL================================
+;====================================================================
+graficarFuncionNormal:
+mov ax,0013h
+int 10h
+
+call graficarEjes
+call _graficarFuncionNormal
+
+;Presione una tecla para salir
+mov ah,10h
+int 16h
+
+;Regresar al modo texto
+mov ax,0003h
+int 10h
+jmp graficar
+
+graficarFuncionDerivada:
+mov ax,0013h
+int 10h
+
+call graficarEjes
+call _graficarFuncionDerivada
+
+;Presione una tecla para salir
+mov ah,10h
+int 16h
+
+;Regresar al modo texto
+mov ax,0003h
+int 10h
+jmp graficar
+
+graficarFuncionIntegrada:
+mov ax,0013h
+int 10h
+
+call graficarEjes
+call _graficarFuncionIntegrada
+
+;Presione una tecla para salir
+mov ah,10h
+int 16h
+
+;Regresar al modo texto
+mov ax,0003h
+int 10h
+jmp graficar
+
 jmp menuPrincipal
 
 ;====================================================================
 ;=============================REPORTE================================
 ;====================================================================
 reporte:
+call _graficarFuncionNormal
 jmp menuPrincipal
 
 ;====================================================================
 ;============================CALCULADORA=============================
 ;====================================================================
 modoCalculadora:
+mov al,fun_int[4]
+mov numero_a_imprimir,al
+call printNum
+
+mov al,fun_int[3]
+mov numero_a_imprimir,al
+call printNum
+
+mov al,fun_int[2]
+mov numero_a_imprimir,al
+call printNum
+
+mov al,fun_int[1]
+mov numero_a_imprimir,al
+call printNum
+
+mov al,fun_int[0]
+mov numero_a_imprimir,al
+call printNum
 jmp menuPrincipal
 
   salir:
@@ -168,6 +267,7 @@ jmp menuPrincipal
     int 21h
 
 main endp
+
 
 getchar proc near
 mov ah,01h
@@ -256,22 +356,52 @@ derivarFuncion endp
 integrarFuncion proc near
 pushear
 
-push ax
-dividir fun[4],4
+mov al,fun[4]
+cmp al,0
+je pos3
+
+dividir fun[4],5
+cmp al,0
+jne pos3
+mov al,1
+pos3:
 mov fun_int[4],al
 
-dividir fun[3],3
+mov al,fun[3]
+cmp al,0
+je pos2
+
+dividir fun[3],4
+cmp al,0
+jne pos2
+mov al,1
+pos2:
 mov fun_int[3],al
 
-dividir fun[2],2
+mov al,fun[2]
+cmp al,0
+je pos1
+
+dividir fun[2],3
+cmp al,0
+jne pos1
+mov al,1
+pos1:
 mov fun_int[2],al
 
-dividir fun[1],1
+mov al,fun[1]
+cmp al,0
+je pos0
+
+dividir fun[1],2
+cmp al,0
+jne pos0
+mov al,1
+pos0:
 mov fun_int[1],al
 
 mov al,fun[0]
 mov fun_int[0],al
-pop ax
 
 popear
 ret
@@ -385,9 +515,6 @@ mostrar_funcionIntegrada endp
 printNum proc near
 pushear
 
-mov ax,@data
-mov ds, ax;LIMPIAMOS
-
 mov al,numero_a_imprimir
 
 ;=============Comparamos si es negativa o positiva================
@@ -433,6 +560,388 @@ fin:
 popear
 ret
 printNum endp
+
+potencia proc near
+push cx
+push bx
+mov _pot,1
+
+xor cx,cx
+xor bx,bx
+xor ax,ax
+
+mov cl,exp
+pot:
+mov ax,base
+mov bx,_pot
+  imul bx
+xor ah,ah
+mov _pot,ax
+Loop pot
+
+pop bx
+pop cx
+ret
+potencia endp
+
+;====================================================================
+;=============================GRAFICAR EJES==========================
+;====================================================================
+graficarEjes proc near
+mov cx,13eh;dibujar eje x 318
+eje_x:
+pixel cx,5fh,7fh
+Loop eje_x
+
+;dibujar eje de las y 198
+mov cx,0c6h
+eje_y:
+pixel 9fh,cx,7fh
+Loop eje_y
+ret
+graficarEjes endp
+
+;====================================================================
+;=============================GRAFICAR fx============================
+;====================================================================
+_graficarFuncionNormal proc near
+mov ax,_maximo
+inc ax
+mov _maximo,ax
+
+mov cx,_minimo
+grafo:
+push cx
+
+;==========X4=========
+;mov valorX,cx
+mov base,cx
+mov exp,4
+call potencia
+mov bl,fun[4]
+imul bl
+mov valorFx,ax
+
+;==========X3=========
+;mov valorX,cx
+mov base,cx
+mov exp,3
+call potencia
+mov bl,fun[3]
+imul bl
+add ax,valorFx
+mov valorFx,ax
+
+;==========X2=========
+;mov valorX,cx
+mov base,cx
+mov exp,2
+call potencia
+mov bl,fun[2]
+imul bl
+add ax,valorFx
+mov valorFx,ax
+
+;==========X1=========
+mov ax,cx
+mov bl,fun[1]
+imul bl
+add ax,valorFx
+mov valorFx,ax
+
+;==========X0=========
+mov ax,1
+mov bl,fun[0]
+imul bl
+add ax,valorFx
+;mov valorFx,ax
+
+mov dx,cx;guardamos el valor actual de cx
+add cx,9fh;valor en x
+mov valorX,cx
+
+mov bl,-1;valor en y
+imul bl
+add ax,5fh
+mov valorFx,ax
+pixel valorX,valorFx,31h
+
+;==========Pintar vacios=============
+pushear
+
+cmp dx,_minimo
+je final_bucle
+xor cx,cx
+mov cx,valorAnteriorFx
+sub cx,ax
+;mov numero_a_imprimir,cl
+;call printNum
+
+mov ax,valorFx
+pintar_vacio:
+mov FxActual,ax
+pixel valorX,FxActual,31h
+
+mov bx,valorAnteriorFx
+cmp bx,ax
+ja ant_es_mayor
+jb ant_es_menor
+
+ant_es_menor:
+mov ax,FxActual
+sub ax,1
+jmp fin_loop_vacio
+
+ant_es_mayor:
+mov ax,FxActual
+add ax,1
+
+fin_loop_vacio:
+Loop pintar_vacio
+
+final_bucle:
+popear
+;====================================
+
+;pintarLineaHaciaAbajo valorX,valorFx,dh
+mov valorAnteriorFx,ax
+pop cx
+inc cx
+cmp cx,_maximo
+jne grafo
+
+mov ax,_maximo
+dec ax
+mov _maximo,ax
+
+ret
+_graficarFuncionNormal endp
+
+;====================================================================
+;=============================GRAFICAR f'x===========================
+;====================================================================
+_graficarFuncionDerivada proc near
+mov ax,_maximo
+inc ax
+mov _maximo,ax
+
+mov cx,_minimo
+grafo:
+push cx
+
+;==========X3=========
+;mov valorX,cx
+mov base,cx
+mov exp,3
+call potencia
+mov bl,fun_der[3]
+imul bl
+mov valorFx,ax
+
+;==========X2=========
+;mov valorX,cx
+mov base,cx
+mov exp,2
+call potencia
+mov bl,fun_der[2]
+imul bl
+add ax,valorFx
+mov valorFx,ax
+
+;==========X1=========
+mov ax,cx
+mov bl,fun_der[1]
+imul bl
+add ax,valorFx
+mov valorFx,ax
+
+;==========X0=========
+mov ax,1
+mov bl,fun_der[0]
+imul bl
+add ax,valorFx
+;mov valorFx,ax
+
+mov dx,cx;guardamos el valor actual de cx
+add cx,9fh;valor en x
+mov valorX,cx
+
+mov bl,-1;valor en y
+imul bl
+add ax,5fh
+mov valorFx,ax
+pixel valorX,valorFx,31h
+
+;==========Pintar vacios=============
+pushear
+
+cmp dx,_minimo
+je final_bucle
+xor cx,cx
+mov cx,valorAnteriorFx
+sub cx,ax
+;mov numero_a_imprimir,cl
+;call printNum
+
+mov ax,valorFx
+pintar_vacio:
+mov FxActual,ax
+pixel valorX,FxActual,31h
+
+mov bx,valorAnteriorFx
+cmp bx,ax
+ja ant_es_mayor
+jb ant_es_menor
+
+ant_es_menor:
+mov ax,FxActual
+sub ax,1
+jmp fin_loop_vacio
+
+ant_es_mayor:
+mov ax,FxActual
+add ax,1
+
+fin_loop_vacio:
+Loop pintar_vacio
+
+final_bucle:
+popear
+;====================================
+
+;pintarLineaHaciaAbajo valorX,valorFx,dh
+mov valorAnteriorFx,ax
+pop cx
+inc cx
+cmp cx,_maximo
+jne grafo
+
+mov ax,_maximo
+dec ax
+mov _maximo,ax
+
+ret
+_graficarFuncionDerivada endp
+
+;====================================================================
+;=============================GRAFICAR Fx============================
+;====================================================================
+_graficarFuncionIntegrada proc near
+mov ax,_maximo
+inc ax
+mov _maximo,ax
+
+mov cx,_minimo
+grafo:
+push cx
+
+;==========X5=========
+;mov valorX,cx
+mov base,cx
+mov exp,5
+call potencia
+mov bl,fun_int[4]
+imul bl
+mov valorFx,ax
+
+;==========X4=========
+;mov valorX,cx
+mov base,cx
+mov exp,4
+call potencia
+mov bl,fun_int[3]
+imul bl
+add ax,valorFx
+mov valorFx,ax
+
+;==========X3=========
+;mov valorX,cx
+mov base,cx
+mov exp,3
+call potencia
+mov bl,fun_int[2]
+imul bl
+add ax,valorFx
+mov valorFx,ax
+
+;==========X2=========
+;mov valorX,cx
+mov base,cx
+mov exp,2
+call potencia
+mov bl,fun_int[1]
+imul bl
+add ax,valorFx
+mov valorFx,ax
+
+;==========X1=========
+mov ax,cx
+mov bl,fun_int[0]
+imul bl
+add ax,valorFx
+mov valorFx,ax
+
+mov dx,cx;guardamos el valor actual de cx
+add cx,9fh;valor en x
+mov valorX,cx
+
+mov bl,-1;valor en y
+imul bl
+add ax,5fh
+mov valorFx,ax
+pixel valorX,valorFx,31h
+
+;==========Pintar vacios=============
+pushear
+
+cmp dx,_minimo
+je final_bucle
+xor cx,cx
+mov cx,valorAnteriorFx
+sub cx,ax
+;mov numero_a_imprimir,cl
+;call printNum
+
+mov ax,valorFx
+pintar_vacio:
+mov FxActual,ax
+pixel valorX,FxActual,31h
+
+mov bx,valorAnteriorFx
+cmp bx,ax
+ja ant_es_mayor
+jb ant_es_menor
+
+ant_es_menor:
+mov ax,FxActual
+sub ax,1
+jmp fin_loop_vacio
+
+ant_es_mayor:
+mov ax,FxActual
+add ax,1
+
+fin_loop_vacio:
+Loop pintar_vacio
+
+final_bucle:
+popear
+;====================================
+
+;pintarLineaHaciaAbajo valorX,valorFx,dh
+mov valorAnteriorFx,ax
+pop cx
+inc cx
+cmp cx,_maximo
+jne grafo
+
+mov ax,_maximo
+dec ax
+mov _maximo,ax
+
+ret
+_graficarFuncionIntegrada endp
+
 ;====================================================================
 ;=================================FINAL==============================
 ;====================================================================
