@@ -6,6 +6,7 @@ include macro.asm
 
 inicio db 0ah,0dh,'UNIVERSIDAD DE SAN CARLOS DE GUATEMALA',0ah,0dh,'FACULTAD DE INGENIERIA',0ah,0dh,'ESCUELA CIENCIAS Y SISTEMAS',0ah,0dh,'ARQUITECTURA DE COMPUTADORES Y ENSAMBLADORES 1 A',0ah,0dh,'PRIMER SEMESTRE 2020',0ah,0dh,'PABLO ANDR',90h,'S ROCA DOMINGUEZ',0ah,0dh,'CARNET: 201700584',0ah,0dh,'QUINTA PRACTICA',0ah,0dh,'$' ;caracter "$" para finalizar cadenas;
 menuTexto db 0ah,0dh,'1) Ingresar funcion f(x)',0ah,0dh,'2) Funcion en memoria',0ah,0dh,'3) Derivada f',27h,'(x)',0ah,0dh,'4) Integral F(x)',0ah,0dh,'5) Graficar funciones',0ah,0dh,'6) Reporte',0ah,0dh,'7) Modo calculadora',0ah,0dh,'8) Salir',0ah,0dh,'opcion: ', '$'
+pathArchivoSalida db 'pra5.txt',0
 ;=============INGRESAR FUNCION============
 msgCoeficiente db 0ah,0dh,'Coeficiente de x',0,': ','$'
 minus db ' - ','$'
@@ -27,13 +28,34 @@ cinco db '5','$'
 cuatro db '4','$'
 tres db '3','$'
 dos db '2','$'
+
+msgFxTxt db 'f(x) = '
+msgFderxTxt db 'f',27h,'(x) = '
+msgFintxTxt db 'F(x) = '
+val5Txt db '*x5'
+val4Txt db '*x4'
+val3Txt db '*x3'
+val2Txt db '*x2'
+val1Txt db '*x'
+signoDivTxt db '/'
+masCTxt db ' + c'
+cincoTxt db '5'
+cuatroTxt db '4'
+tresTxt db '3'
+dosTxt db '2'
+minusTxt db ' - '
+maxTxt db ' + '
+salto db 0ah,0dh
+
+signo_a_escribir db 0
+numero_a_escribir db 0
 numero_a_imprimir db 0
 ;=============GRAFICAR============
 menuGraficar db 0ah,0dh,'1) Graficar original f(x)',0ah,0dh,'2) Graficar derivada f',27h,'(x)',0ah,0dh,'3) Graficar integral F(x)',0ah,0dh,'4) Regresar',0ah,0dh,'opcion: ', '$'
 valorFx dw 0
 valorX dw 0
-_minimo dw -4
-_maximo dw 4
+_minimo dw -3
+_maximo dw 3
 _pot dw 1
 base dw 0
 exp db 0
@@ -143,6 +165,7 @@ jmp menuPrincipal
 ;====================================================================
 funcionEnMemoria:
 call mostrar_funcionEnMemoria
+;call mostrar_funcionEnMemoriaTxt
 jmp menuPrincipal
 
 ;====================================================================
@@ -185,6 +208,7 @@ int 10h
 
 call graficarEjes
 call _graficarFuncionNormal
+;pixel 134,80,31h
 
 ;Presione una tecla para salir
 mov ah,10h
@@ -276,57 +300,6 @@ ret
 getchar endp
 
 ;====================================================================
-;=========================MOSTRAR FUNCION============================
-;====================================================================
-mostrar_funcionEnMemoria proc near
-pushear
-
-print msgFx
-
-mov ah,fun[4]
-cmp ah,0
-je v3
-mov numero_a_imprimir,ah
-call printNum
-print val4
-
-v3:
-mov ah,fun[3]
-cmp ah,0
-je v2
-mov numero_a_imprimir,ah
-call printNum
-print val3
-
-v2:
-mov ah,fun[2]
-cmp ah,0
-je v1
-mov numero_a_imprimir,ah
-call printNum
-print val2
-
-v1:
-mov ah,fun[1]
-cmp ah,0
-je v0
-mov numero_a_imprimir,ah
-call printNum
-print val1
-
-v0:
-mov ah,fun[0]
-cmp ah,0
-je fin_proceso
-mov numero_a_imprimir,ah
-call printNum
-
-fin_proceso:
-popear
-ret
-mostrar_funcionEnMemoria endp
-
-;====================================================================
 ;=========================DERIVAR FUNCION============================
 ;====================================================================
 derivarFuncion proc near
@@ -408,11 +381,99 @@ ret
 integrarFuncion endp
 
 ;====================================================================
+;=========================MOSTRAR FUNCION============================
+;====================================================================
+mostrar_funcionEnMemoria proc near
+crearArchivo pathArchivoSalida
+pushear
+
+;abrir el archivo
+mov ah,3dh
+mov al,1h ;Abrimos el archivo en solo escritura.
+mov dx,offset pathArchivoSalida
+int 21h
+;jc salir ;Si hubo error
+mov bx,ax ; mover hadfile
+
+escribirEnArchivo msgFxTxt,SIZEOF msgFxTxt
+print msgFx
+
+mov ah,fun[4]
+cmp ah,0
+je v3
+mov numero_a_imprimir,ah
+call printNum
+print val4
+escribirEnArchivo signo_a_escribir,SIZEOF signo_a_escribir
+escribirEnArchivo numero_a_escribir,SIZEOF numero_a_escribir
+escribirEnArchivo val4Txt,SIZEOF val4Txt
+
+v3:
+mov ah,fun[3]
+cmp ah,0
+je v2
+mov numero_a_imprimir,ah
+call printNum
+print val3
+escribirEnArchivo signo_a_escribir,SIZEOF signo_a_escribir
+escribirEnArchivo numero_a_escribir,SIZEOF numero_a_escribir
+escribirEnArchivo val3Txt,SIZEOF val3Txt
+
+v2:
+mov ah,fun[2]
+cmp ah,0
+je v1
+mov numero_a_imprimir,ah
+call printNum
+print val2
+escribirEnArchivo signo_a_escribir,SIZEOF signo_a_escribir
+escribirEnArchivo numero_a_escribir,SIZEOF numero_a_escribir
+escribirEnArchivo val2Txt,SIZEOF val2Txt
+
+v1:
+mov ah,fun[1]
+cmp ah,0
+je v0
+mov numero_a_imprimir,ah
+call printNum
+print val1
+escribirEnArchivo signo_a_escribir,SIZEOF signo_a_escribir
+escribirEnArchivo numero_a_escribir,SIZEOF numero_a_escribir
+escribirEnArchivo val1Txt,SIZEOF val1Txt
+
+v0:
+mov ah,fun[0]
+cmp ah,0
+je fin_proceso
+mov numero_a_imprimir,ah
+call printNum
+escribirEnArchivo signo_a_escribir,SIZEOF signo_a_escribir
+escribirEnArchivo numero_a_escribir,SIZEOF numero_a_escribir
+
+fin_proceso:
+mov ah,3eh  ;Cierre de archivo
+int 21h
+
+popear
+ret
+mostrar_funcionEnMemoria endp
+
+;====================================================================
 ;=========================MOSTRAR DERIVADA============================
 ;====================================================================
 mostrar_funcionDerivada proc near
+crearArchivo pathArchivoSalida
 pushear
 
+;abrir el archivo
+mov ah,3dh
+mov al,1h ;Abrimos el archivo en solo escritura.
+mov dx,offset pathArchivoSalida
+int 21h
+;jc salir ;Si hubo error
+mov bx,ax ; mover hadfile
+
+escribirEnArchivo msgFderxTxt,SIZEOF msgFderxTxt
 print msgFderx
 
 v3:
@@ -422,6 +483,9 @@ je v2
 mov numero_a_imprimir,ah
 call printNum
 print val3
+escribirEnArchivo signo_a_escribir,SIZEOF signo_a_escribir
+escribirEnArchivo numero_a_escribir,SIZEOF numero_a_escribir
+escribirEnArchivo val3Txt,SIZEOF val3Txt
 
 v2:
 mov ah,fun_der[2]
@@ -430,6 +494,9 @@ je v1
 mov numero_a_imprimir,ah
 call printNum
 print val2
+escribirEnArchivo signo_a_escribir,SIZEOF signo_a_escribir
+escribirEnArchivo numero_a_escribir,SIZEOF numero_a_escribir
+escribirEnArchivo val2Txt,SIZEOF val2Txt
 
 v1:
 mov ah,fun_der[1]
@@ -438,6 +505,9 @@ je v0
 mov numero_a_imprimir,ah
 call printNum
 print val1
+escribirEnArchivo signo_a_escribir,SIZEOF signo_a_escribir
+escribirEnArchivo numero_a_escribir,SIZEOF numero_a_escribir
+escribirEnArchivo val1Txt,SIZEOF val1Txt
 
 v0:
 mov ah,fun_der[0]
@@ -445,8 +515,12 @@ cmp ah,0
 je fin_proceso
 mov numero_a_imprimir,ah
 call printNum
+escribirEnArchivo signo_a_escribir,SIZEOF signo_a_escribir
+escribirEnArchivo numero_a_escribir,SIZEOF numero_a_escribir
 
 fin_proceso:
+mov ah,3eh  ;Cierre de archivo
+int 21h
 popear
 ret
 mostrar_funcionDerivada endp
@@ -455,9 +529,18 @@ mostrar_funcionDerivada endp
 ;=========================MOSTRAR INTEGRAL===========================
 ;====================================================================
 mostrar_funcionIntegrada proc near
+crearArchivo pathArchivoSalida
 pushear
 
-print msgFintx
+;abrir el archivo
+mov ah,3dh
+mov al,1h ;Abrimos el archivo en solo escritura.
+mov dx,offset pathArchivoSalida
+int 21h
+;jc salir ;Si hubo error
+mov bx,ax ; mover hadfile
+
+escribirEnArchivo msgFintxTxt,SIZEOF msgFintxTxt
 
 mov ah,fun[4]
 cmp ah,0
@@ -467,6 +550,11 @@ call printNum
 print signoDiv
 print cinco
 print val5
+escribirEnArchivo signo_a_escribir,SIZEOF signo_a_escribir
+escribirEnArchivo numero_a_escribir,SIZEOF numero_a_escribir
+escribirEnArchivo signoDivTxt,SIZEOF signoDivTxt
+escribirEnArchivo cincoTxt,SIZEOF cincoTxt
+escribirEnArchivo val5Txt,SIZEOF val5Txt
 
 v3:
 mov ah,fun[3]
@@ -477,6 +565,11 @@ call printNum
 print signoDiv
 print cuatro
 print val4
+escribirEnArchivo signo_a_escribir,SIZEOF signo_a_escribir
+escribirEnArchivo numero_a_escribir,SIZEOF numero_a_escribir
+escribirEnArchivo signoDivTxt,SIZEOF signoDivTxt
+escribirEnArchivo cuatroTxt,SIZEOF cuatroTxt
+escribirEnArchivo val4Txt,SIZEOF val4Txt
 
 v2:
 mov ah,fun[2]
@@ -487,6 +580,11 @@ call printNum
 print signoDiv
 print tres
 print val3
+escribirEnArchivo signo_a_escribir,SIZEOF signo_a_escribir
+escribirEnArchivo numero_a_escribir,SIZEOF numero_a_escribir
+escribirEnArchivo signoDivTxt,SIZEOF signoDivTxt
+escribirEnArchivo tresTxt,SIZEOF tresTxt
+escribirEnArchivo val3Txt,SIZEOF val3Txt
 
 v1:
 mov ah,fun[1]
@@ -497,6 +595,11 @@ call printNum
 print signoDiv
 print dos
 print val2
+escribirEnArchivo signo_a_escribir,SIZEOF signo_a_escribir
+escribirEnArchivo numero_a_escribir,SIZEOF numero_a_escribir
+escribirEnArchivo signoDivTxt,SIZEOF signoDivTxt
+escribirEnArchivo dosTxt,SIZEOF dosTxt
+escribirEnArchivo val2Txt,SIZEOF val2Txt
 
 v0:
 mov ah,fun[0]
@@ -505,9 +608,15 @@ je fin_proceso
 mov numero_a_imprimir,ah
 call printNum
 print val1
+escribirEnArchivo signo_a_escribir,SIZEOF signo_a_escribir
+escribirEnArchivo numero_a_escribir,SIZEOF numero_a_escribir
+escribirEnArchivo val1Txt,SIZEOF val1Txt
 
 fin_proceso:
 print masC
+escribirEnArchivo masCTxt,SIZEOF masCTxt
+mov ah,3eh  ;Cierre de archivo
+int 21h
 popear
 ret
 mostrar_funcionIntegrada endp
@@ -524,10 +633,12 @@ jg _imprimir_pos;=====Si es positiva no hacemos ningun cambio========
 je _imprimir_pos
 imul bl;=Si es negativa convertimos a positiva e imprimimos signo======
 print minus
+mov signo_a_escribir,45
 jmp _imprimir_num
 
 _imprimir_pos:
 print max
+mov signo_a_escribir,43
 
 _imprimir_num:
 xor bx,bx
@@ -555,6 +666,7 @@ mov ah,02h
 mov dl,bl
 add dl,30h
 int 21h
+mov numero_a_escribir,dl
 
 fin:
 popear
@@ -656,6 +768,7 @@ imul bl
 add ax,valorFx
 ;mov valorFx,ax
 
+;==========PUNTO=============
 mov dx,cx;guardamos el valor actual de cx
 add cx,9fh;valor en x
 mov valorX,cx
